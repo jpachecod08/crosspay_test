@@ -29,12 +29,23 @@ export default function AdminLogin() {
       const token = res.data.token;
       localStorage.setItem("token", token);
       setAuthToken(token);
-      // 🔥 CORRECCIÓN CLAVE: Usamos replace: true para evitar problemas en el desmontaje/montaje.
+      
+      // 🔥 SOLUCIÓN FINAL AL ERROR 'removeChild':
+      // Introducir un pequeño retraso (100ms) para que el estado de 'loading'
+      // se actualice y el DOM se estabilice antes de iniciar la navegación.
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Mantenemos { replace: true } ya que es la mejor práctica después del login.
       nav("/admin/transactions", { replace: true });
+
     } catch (err) {
-      alert("Credenciales inválidas");
+      // Usamos console.error para no depender de alert()
+      console.error("Login fallido:", err); 
+      // Aquí deberías usar un componente Snackbar o un modal, no alert()
+      alert("Credenciales inválidas"); 
     } finally {
-      setLoading(false);
+      // Aseguramos que loading se desactive, aunque la navegación ya se inició
+      setLoading(false); 
     }
   };
 
