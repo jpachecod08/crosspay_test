@@ -24,7 +24,7 @@ export default function AdminLogin() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await api.post("auth/login/", creds);
+      const res = await api.post("api/auth/login/", creds)
       const token = res.data.token;
       localStorage.setItem("token", token);
       setAuthToken(token);
