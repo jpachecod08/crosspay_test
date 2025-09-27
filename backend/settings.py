@@ -3,7 +3,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import dj_database_url
 
-# Cargar variables del archivo .env
+# Cargar variables del archivo .env (para desarrollo local)
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -11,7 +11,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ---------------- Seguridad ----------------
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
 DEBUG = os.getenv('DEBUG', '0') == '1'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+
+# Permite hosts de Render y la cadena vacía si no está definida (para evitar errores)
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') 
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = []
 
 # ---------------- Aplicaciones instaladas ----------------
 INSTALLED_APPS = [
@@ -25,7 +29,7 @@ INSTALLED_APPS = [
     # third party
     'rest_framework',
     'rest_framework.authtoken',
-    'corsheaders',
+    'corsheaders', # ¡El paquete que da el error E006!
 
     # local apps
     'backend.transactions',
@@ -34,7 +38,8 @@ INSTALLED_APPS = [
 # ---------------- Middleware ----------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # sirve archivos estáticos
+    # whitenoise debe ir antes de CorsMiddleware para servir archivos estáticos
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -65,10 +70,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-# ---------------- Base de datos ----------------
+# ---------------- Base de datos (Optimizado para Render) ----------------
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
+    # dj_database_url.config() lee DATABASE_URL automáticamente
+    'default': dj_database_url.config(
+        conn_max_age=600,  # Mejora el rendimiento de la DB
+        ssl_require=True   # Requisito para PostgreSQL en Render
+    )
 }
+
+# Configuración de fallback (solo para desarrollo local si no hay DATABASE_URL)
+if not os.getenv('DATABASE_URL'):
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 
 # ---------------- Autenticación ----------------
 AUTH_PASSWORD_VALIDATORS = [
@@ -89,9 +105,18 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# ---------------- CORS ----------------
+# ---------------- CORS (Corregido el error E006) ----------------
 CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL', '0') == '1'
-CORS_ALLOWED_ORIGINS = [os.getenv('FRONTEND_BASE_URL')] if not CORS_ALLOW_ALL_ORIGINS else []
+frontend_url = os.getenv('FRONTEND_BASE_URL')
+CORS_ALLOWED_ORIGINS = [] # Inicializamos como lista vacía (válida)
+
+if not CORS_ALLOW_ALL_ORIGINS and frontend_url:
+    # Solo agrega la URL si NO se permite todo (CORS_ALLOW_ALL=0) Y la URL existe
+    CORS_ALLOWED_ORIGINS = [frontend_url]
+elif CORS_ALLOW_ALL_ORIGINS:
+    # Si CORS_ALLOW_ALL es True, la lista debe ser vacía para permitir todas
+    CORS_ALLOWED_ORIGINS = []
+# Si CORS_ALLOW_ALL es False y frontend_url es None, se queda como [] (válido)
 
 # ---------------- DRF ----------------
 REST_FRAMEWORK = {
