@@ -21,43 +21,37 @@ export default function AdminTransactions() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let active = true;
+    let isMounted = true;
     const token = localStorage.getItem("token");
+
     if (!token) {
-      nav("/admin/login");
+      nav("/admin/login", { replace: true });
       return;
     }
+
     setAuthToken(token);
 
-    const delay = new Promise((resolve) => setTimeout(resolve, 1500));
-
-    Promise.all([fetchTxs(), delay])
-      .then(() => {
-        if (active) setLoading(false);
-      })
-      .catch(() => {
-        if (active) setLoading(false);
-      });
+    (async () => {
+      try {
+        const res = await api.get("transactions/");
+        if (isMounted) {
+          setTxs(res.data);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error(err);
+        if (err.response?.status === 401) {
+          localStorage.removeItem("token");
+          nav("/admin/login", { replace: true });
+        }
+        if (isMounted) setLoading(false);
+      }
+    })();
 
     return () => {
-      active = false; // ✅ evita actualizar estado tras desmontar
+      isMounted = false;
     };
-  }, []);
-
-  async function fetchTxs() {
-    try {
-      const res = await api.get("transactions/");
-      setTxs(res.data);
-      return res; // ✅ devolvemos la promesa para usar en Promise.all
-    } catch (err) {
-      console.error(err);
-      if (err.response?.status === 401) {
-        localStorage.removeItem("token");
-        nav("/admin/login");
-      }
-      throw err; // ✅ dejamos que Promise.all maneje el error
-    }
-  }
+  }, [nav]);
 
   return (
     <Box
@@ -96,7 +90,7 @@ export default function AdminTransactions() {
             color="error"
             onClick={() => {
               localStorage.removeItem("token");
-              nav("/admin/login");
+              nav("/admin/login", { replace: true });
             }}
           >
             Cerrar sesión

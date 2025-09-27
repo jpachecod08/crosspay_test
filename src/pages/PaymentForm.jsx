@@ -12,13 +12,13 @@ import {
   Paper,
   CircularProgress,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom"; // ✅ para navegación
-import api from "../api/axios"; // ✅ tu instancia real
+import { useNavigate, useLocation } from "react-router-dom"; // ✅ usamos location
+import api from "../api/axios";
 import CrossPayLogo from "../assets/crosspay.svg";
-
 
 export default function PaymentForm() {
   const navigate = useNavigate();
+  const location = useLocation(); // ✅ ruta actual
 
   const [form, setForm] = useState({
     currency: "COP",
@@ -41,14 +41,13 @@ export default function PaymentForm() {
     e.preventDefault();
     setLoading(true);
 
-    const delay = new Promise((resolve) => setTimeout(resolve, 1000)); // ⏳ 1s mínimo
+    const delay = new Promise((resolve) => setTimeout(resolve, 1000));
 
     try {
       const payload = { ...form };
       await Promise.all([api.post("transactions/", payload), delay]);
       setMsg({ type: "success", text: "Transacción registrada correctamente" });
 
-      // Limpiar formulario
       setForm({
         currency: "COP",
         amount: "",
@@ -64,8 +63,7 @@ export default function PaymentForm() {
       console.error("Error:", err);
       setMsg({
         type: "error",
-        text:
-          err.response?.data?.error || "Error registrando la transacción",
+        text: err.response?.data?.error || "Error registrando la transacción",
       });
     } finally {
       setLoading(false);
@@ -82,31 +80,44 @@ export default function PaymentForm() {
         flexDirection: "column",
       }}
     >
-      {/* 🔹 NAVBAR SUPERIOR */}
-<AppBar position="static" color="primary" sx={{ mb: 4 }}>
-  <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-    {/* 👇 Reemplazamos texto por logo */}
-    <Box sx={{ display: "flex", alignItems: "center" }}>
-      <img
-        src={CrossPayLogo}
-        alt="CrossPay Logo"
-        style={{ height: "40px", cursor: "pointer" }}
-        onClick={() => navigate("/")} // opcional: click lleva al inicio
-      />
-    </Box>
+      {/* 🔹 NAVBAR */}
+      <AppBar position="static" color="primary" sx={{ mb: 4 }}>
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <img
+              src={CrossPayLogo}
+              alt="CrossPay Logo"
+              style={{ height: "40px", cursor: "pointer" }}
+              onClick={() => navigate("/")}
+            />
+          </Box>
 
-    <Box>
-      <Button color="inherit" onClick={() => navigate("/")}>
-        Formulario
-      </Button>
-      <Button color="inherit" onClick={() => navigate("/admin/login")}>
-        Portal Administrativo
-      </Button>
-    </Box>
-  </Toolbar>
-</AppBar>
+          <Box>
+            <Button
+              color="inherit"
+              onClick={() => navigate("/")}
+              disabled={location.pathname === "/"}
+              sx={{
+                opacity: location.pathname === "/" ? 0.5 : 1,
+              }}
+            >
+              Formulario
+            </Button>
+            <Button
+              color="inherit"
+              onClick={() => navigate("/admin/login")}
+              disabled={location.pathname === "/admin/login"}
+              sx={{
+                opacity: location.pathname === "/admin/login" ? 0.5 : 1,
+              }}
+            >
+              Portal Administrativo
+            </Button>
+          </Box>
+        </Toolbar>
+      </AppBar>
 
-      {/* 🔹 CONTENIDO PRINCIPAL */}
+      {/* 🔹 CONTENIDO */}
       <Box
         sx={{
           flex: 1,
@@ -131,7 +142,6 @@ export default function PaymentForm() {
             textAlign="center"
             fontWeight="bold"
             color="primary"
-            gutterBottom
           >
             Formulario de pago
           </Typography>
@@ -237,7 +247,6 @@ export default function PaymentForm() {
               disabled={loading}
               fullWidth
               sx={{ mt: 4, py: 1.5, fontWeight: "bold", fontSize: "1.1rem" }}
-              size="large"
             >
               {loading ? (
                 <CircularProgress size={24} color="inherit" />

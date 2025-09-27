@@ -13,12 +13,13 @@ import {
 import { Lock } from "@mui/icons-material";
 import api, { setAuthToken } from "../api/axios";
 import CrossPayLogo from "../assets/crosspay.svg";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom"; // ✅ usamos location
 
 export default function AdminLogin() {
   const [creds, setCreds] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
+  const location = useLocation(); // ✅ ruta actual
 
   const submit = async (e) => {
     e.preventDefault();
@@ -46,31 +47,44 @@ export default function AdminLogin() {
         background: "linear-gradient(135deg, #1976d2 30%, #42a5f5 90%)",
       }}
     >
-      {/* 🔹 NAVBAR SUPERIOR */}
-<AppBar position="static" color="primary" sx={{ mb: 4 }}>
-  <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-    {/* 👇 Reemplazamos texto por logo */}
-    <Box sx={{ display: "flex", alignItems: "center" }}>
-      <img
-        src={CrossPayLogo}
-        alt="CrossPay Logo"
-        style={{ height: "40px", cursor: "pointer" }}
-        onClick={() => nav("/")} // opcional: click lleva al inicio
-      />
-    </Box>
+      {/* 🔹 NAVBAR */}
+      <AppBar position="static" color="primary" sx={{ mb: 4 }}>
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <img
+              src={CrossPayLogo}
+              alt="CrossPay Logo"
+              style={{ height: "40px", cursor: "pointer" }}
+              onClick={() => nav("/")}
+            />
+          </Box>
 
-    <Box>
-      <Button color="inherit" onClick={() => nav("/")}>
-        Formulario
-      </Button>
-      <Button color="inherit" onClick={() => nav("/admin/login")}>
-        Portal Administrativo
-      </Button>
-    </Box>
-  </Toolbar>
-</AppBar>
+          <Box>
+            <Button
+              color="inherit"
+              onClick={() => nav("/")}
+              disabled={location.pathname === "/"}
+              sx={{
+                opacity: location.pathname === "/" ? 0.5 : 1,
+              }}
+            >
+              Formulario
+            </Button>
+            <Button
+              color="inherit"
+              onClick={() => nav("/admin/login")}
+              disabled={location.pathname === "/admin/login"}
+              sx={{
+                opacity: location.pathname === "/admin/login" ? 0.5 : 1,
+              }}
+            >
+              Portal Administrativo
+            </Button>
+          </Box>
+        </Toolbar>
+      </AppBar>
 
-      {/* 🔹 CONTENIDO PRINCIPAL */}
+      {/* 🔹 CONTENIDO */}
       <Box
         sx={{
           flex: 1,
