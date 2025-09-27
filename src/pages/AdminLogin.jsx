@@ -11,15 +11,15 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { Lock } from "@mui/icons-material";
-import api, { setAuthToken } from "../api/axios";
-import CrossPayLogo from "../assets/crosspay.svg";
-import { useNavigate, useLocation } from "react-router-dom"; // ✅ usamos location
+import api, { setAuthToken } from "../api/axios"; // Asegúrate de que tu archivo api/axios sea correcto
+import CrossPayLogo from "../assets/crosspay.svg"; // Asegúrate de que la ruta de la imagen sea correcta
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function AdminLogin() {
   const [creds, setCreds] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
-  const location = useLocation(); // ✅ ruta actual
+  const location = useLocation();
 
   const submit = async (e) => {
     e.preventDefault();
@@ -29,7 +29,8 @@ export default function AdminLogin() {
       const token = res.data.token;
       localStorage.setItem("token", token);
       setAuthToken(token);
-      nav("/admin/transactions");
+      // 🔥 CORRECCIÓN CLAVE: Usamos replace: true para evitar problemas en el desmontaje/montaje.
+      nav("/admin/transactions", { replace: true });
     } catch (err) {
       alert("Credenciales inválidas");
     } finally {
