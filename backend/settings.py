@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 import dj_database_url
+import re # ¡Nueva importación necesaria para las expresiones regulares!
 
 # Cargar variables del archivo .env (para desarrollo local)
 load_dotenv()
@@ -10,9 +11,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ---------------- Seguridad ----------------
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
-DEBUG = os.getenv('DEBUG', '0') == '1'
+# DEBUG debe ser un booleano, y '1' o 'True' se considera True
+DEBUG = os.getenv('DEBUG', '0').lower() in ('true', '1')
 
 # Permite hosts de Render y la cadena vacía si no está definida (para evitar errores)
+# Nota: La configuración en Render tiene ALLOWED_HOSTS=crosspay-test-13.onrender.com
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') 
 if not ALLOWED_HOSTS:
     ALLOWED_HOSTS = []
@@ -29,7 +32,7 @@ INSTALLED_APPS = [
     # third party
     'rest_framework',
     'rest_framework.authtoken',
-    'corsheaders', # ¡El paquete que da el error E006!
+    'corsheaders', 
 
     # local apps
     'backend.transactions',
@@ -40,7 +43,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     # whitenoise debe ir antes de CorsMiddleware para servir archivos estáticos
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # Debe estar lo más alto posible
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -74,8 +77,8 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     # dj_database_url.config() lee DATABASE_URL automáticamente
     'default': dj_database_url.config(
-        conn_max_age=600,  # Mejora el rendimiento de la DB
-        ssl_require=True   # Requisito para PostgreSQL en Render
+        conn_max_age=600,   # Mejora el rendimiento de la DB
+        ssl_require=True    # Requisito para PostgreSQL en Render
     )
 }
 
@@ -105,18 +108,35 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# ---------------- CORS (Corregido el error E006) ----------------
-CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL', '0') == '1'
-frontend_url = os.getenv('FRONTEND_BASE_URL')
-CORS_ALLOWED_ORIGINS = [] # Inicializamos como lista vacía (válida)
+# ====================================================================
+# ---------------- CORS (Sección Corregida) ----------------
+# ====================================================================
 
-if not CORS_ALLOW_ALL_ORIGINS and frontend_url:
-    # Solo agrega la URL si NO se permite todo (CORS_ALLOW_ALL=0) Y la URL existe
-    CORS_ALLOWED_ORIGINS = [frontend_url]
-elif CORS_ALLOW_ALL_ORIGINS:
-    # Si CORS_ALLOW_ALL es True, la lista debe ser vacía para permitir todas
+# Lee la variable de entorno para saber si se permite TODO
+CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL', '0') == '1'
+frontend_base_url = os.getenv('FRONTEND_BASE_URL') # Tu URL principal de Vercel
+
+# Si se usa autenticación (TokenAuthentication en tu caso), se requieren credenciales.
+CORS_ALLOW_CREDENTIALS = True 
+
+if CORS_ALLOW_ALL_ORIGINS:
+    # Si CORS_ALLOW_ALL es True (Valor 1), se permite todo origen.
     CORS_ALLOWED_ORIGINS = []
-# Si CORS_ALLOW_ALL es False y frontend_url es None, se queda como [] (válido)
+    CORS_ALLOWED_ORIGIN_REGEXES = []
+else:
+    # Si CORS_ALLOW_ALL es False (Valor 0), configuramos orígenes específicos.
+    
+    # 1. CORS_ALLOWED_ORIGINS: Para el dominio principal exacto
+    CORS_ALLOWED_ORIGINS = []
+    if frontend_base_url:
+        CORS_ALLOWED_ORIGINS.append(frontend_base_url)
+        
+    # 2. CORS_ALLOWED_ORIGIN_REGEXES: Para permitir los subdominios de preview de Vercel.
+    # El patrón r"^https://[a-zA-Z0-9-]+\.vercel\.app$" permite cualquier subdominio
+    # que termine en .vercel.app, cubriendo los dominios de preview.
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^https://[a-zA-Z0-9-]+\.vercel\.app$",
+    ]
 
 # ---------------- DRF ----------------
 REST_FRAMEWORK = {
