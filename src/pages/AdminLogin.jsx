@@ -55,15 +55,15 @@ export default function AdminLogin() {
         src={CrossPayLogo}
         alt="CrossPay Logo"
         style={{ height: "40px", cursor: "pointer" }}
-        onClick={() => navigate("/")} // opcional: click lleva al inicio
+        onClick={() => nav("/")} // opcional: click lleva al inicio
       />
     </Box>
 
     <Box>
-      <Button color="inherit" onClick={() => navigate("/")}>
+      <Button color="inherit" onClick={() => nav("/")}>
         Formulario
       </Button>
-      <Button color="inherit" onClick={() => navigate("/admin/login")}>
+      <Button color="inherit" onClick={() => nav("/admin/login")}>
         Portal Administrativo
       </Button>
     </Box>
