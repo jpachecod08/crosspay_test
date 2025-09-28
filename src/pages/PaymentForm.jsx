@@ -80,7 +80,7 @@ export default function PaymentForm() {
         flexDirection: "column",
       }}
     >
-      {/* 🔹 NAVBAR */}
+       {/* 🔹 NAVBAR */}
       <AppBar position="static" color="primary" sx={{ mb: 4 }}>
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
           <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -88,27 +88,29 @@ export default function PaymentForm() {
               src={CrossPayLogo}
               alt="CrossPay Logo"
               style={{ height: "40px", cursor: "pointer" }}
-              onClick={() => navigate("/")}
+              onClick={() => nav("/")}
             />
           </Box>
 
           <Box>
             <Button
               color="inherit"
-              onClick={() => navigate("/")}
+              onClick={() => nav("/")}
               disabled={location.pathname === "/"}
               sx={{
                 opacity: location.pathname === "/" ? 0.5 : 1,
+                color: 'white', // 👈 Texto blanco para el botón
               }}
             >
               Formulario
             </Button>
             <Button
               color="inherit"
-              onClick={() => navigate("/admin/login")}
+              onClick={() => nav("/admin/login")}
               disabled={location.pathname === "/admin/login"}
               sx={{
                 opacity: location.pathname === "/admin/login" ? 0.5 : 1,
+                color: 'white', // 👈 Texto blanco para el botón
               }}
             >
               Portal Administrativo

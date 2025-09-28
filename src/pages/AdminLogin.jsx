@@ -24,29 +24,26 @@ export default function AdminLogin() {
   const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const res = await api.post("auth/login/", creds);
       const token = res.data.token;
+      
       localStorage.setItem("token", token);
       setAuthToken(token);
       
-      // 🔥 SOLUCIÓN FINAL AL ERROR 'removeChild':
-      // Introducir un pequeño retraso (100ms) para que el estado de 'loading'
-      // se actualice y el DOM se estabilice antes de iniciar la navegación.
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Mantenemos { replace: true } ya que es la mejor práctica después del login.
+      // ✅ SOLUCIÓN AL ERROR: Navegamos inmediatamente al éxito.
+      // NO llamamos a setLoading(false). El componente se desmontará.
       nav("/admin/transactions", { replace: true });
 
     } catch (err) {
-      // Usamos console.error para no depender de alert()
+      // ❌ Si falla: mostramos el error y desactivamos loading para que puedan reintentar.
       console.error("Login fallido:", err); 
-      // Aquí deberías usar un componente Snackbar o un modal, no alert()
-      alert("Credenciales inválidas"); 
-    } finally {
-      // Aseguramos que loading se desactive, aunque la navegación ya se inició
+      alert("Credenciales inválidas"); // Deberías usar Snackbar o un componente mejor en producción
       setLoading(false); 
     }
+    // ⚠️ Importante: El bloque 'finally' se ha ELIMINADO para evitar que setLoading(false)
+    // se ejecute después de una navegación exitosa (que es lo que causaba el error).
   };
 
   return (
@@ -59,7 +56,7 @@ export default function AdminLogin() {
         background: "linear-gradient(135deg, #1976d2 30%, #42a5f5 90%)",
       }}
     >
-      {/* 🔹 NAVBAR */}
+        {/* 🔹 NAVBAR */}
       <AppBar position="static" color="primary" sx={{ mb: 4 }}>
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
           <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -78,6 +75,7 @@ export default function AdminLogin() {
               disabled={location.pathname === "/"}
               sx={{
                 opacity: location.pathname === "/" ? 0.5 : 1,
+                color: 'white',
               }}
             >
               Formulario
@@ -88,6 +86,7 @@ export default function AdminLogin() {
               disabled={location.pathname === "/admin/login"}
               sx={{
                 opacity: location.pathname === "/admin/login" ? 0.5 : 1,
+                color: 'white',
               }}
             >
               Portal Administrativo
