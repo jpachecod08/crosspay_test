@@ -17,7 +17,7 @@ import api from "../api/axios";
 import CrossPayLogo from "../assets/crosspay.svg";
 
 export default function PaymentForm() {
-  const navigate = useNavigate();
+  const nav = useNavigate();
   const location = useLocation(); // ✅ ruta actual
 
   const [form, setForm] = useState({
